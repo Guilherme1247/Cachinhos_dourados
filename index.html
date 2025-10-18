@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buraco Negro 3D - Mensagem Especial</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        #instructions {
+            position: absolute;
+            top: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.7);
+            text-align: center;
+            pointer-events: none;
+            z-index: 10;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-size: 13px;
+            font-weight: 400;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        /* Redesigned music player to be horizontal and positioned at top */
+        #music-player {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 600px;
+            height: 70px;
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%);
+            border-radius: 12px;
+            padding: 10px 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #vinyl-container {
+            position: relative;
+            width: 50px;
+            height: 50px;
+            flex-shrink: 0;
+        }
+
+        #vinyl {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle at center, #1a1a1a 0%, #0a0a0a 30%, #1a1a1a 31%, #0a0a0a 32%, #1a1a1a 60%, #000 100%);
+            position: relative;
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
+        }
+
+        #vinyl.spinning {
+            animation: spin 3s linear infinite;
+        }
+
+        #vinyl::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+        }
+
+        #vinyl::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #0a0a0a;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        #player-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        #player-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        #song-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        #song-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #song-artist {
+            font-size: 11px;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.6);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #player-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .player-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #fff;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .player-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .player-btn.play-pause {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            font-size: 16px;
+        }
+
+        .player-btn.play-pause:hover {
+            background: linear-gradient(135deg, #ff7b7b 0%, #fe6a7f 100%);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        #progress-container {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b 0%, #ee5a6f 100%);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.1s linear;
+            position: relative;
+        }
+
+        #progress-bar::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Enhanced mobile responsiveness for tablets */
+        @media (max-width: 768px) {
+            #instructions {
+                font-size: 12px;
+                padding: 0 20px;
+                top: 95px;
+            }
+
+            #controls {
+                bottom: 20px;
+                right: 20px;
+                gap: 8px;
+            }
+
+            .btn {
+                padding: 12px 16px;
+                font-size: 12px;
+                min-height: 44px;
+            }
+
+            #music-player {
+                width: calc(100% - 30px);
+                height: auto;
+                min-height: 70px;
+                padding: 10px 12px;
+                gap: 12px;
+            }
+
+            #vinyl-container {
+                width: 48px;
+                height: 48px;
+            }
+
+            #song-title {
+                font-size: 13px;
+            }
+
+            #song-artist {
+                font-size: 10px;
+            }
+
+            .player-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 14px;
+            }
+
+            .player-btn.play-pause {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+        }
+
+        /* Improved mobile layout for phones */
+        @media (max-width: 480px) {
+            #music-player {
+                width: calc(100% - 20px);
+                top: 10px;
+                padding: 10px;
+                gap: 10px;
+            }
+
+            #vinyl-container {
+                width: 44px;
+                height: 44px;
+            }
+
+            #player-content {
+                gap: 6px;
+            }
+
+            #song-title {
+                font-size: 12px;
+            }
+
+            #song-artist {
+                font-size: 9px;
+            }
+
+            #player-controls {
+                gap: 6px;
+            }
+
+            .player-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 13px;
+            }
+
+            .player-btn.play-pause {
+                width: 40px;
+                height: 40px;
+                font-size: 15px;
+            }
+
+            #controls {
+                flex-direction: row;
+                bottom: 15px;
+                left: 15px;
+                right: 15px;
+                justify-content: center;
+                gap: 10px;
+            }
+
+            .btn {
+                flex: 1;
+                padding: 12px 8px;
+                font-size: 11px;
+                min-height: 44px;
+            }
+
+            #instructions {
+                font-size: 10px;
+                top: 75px;
+                padding: 0 15px;
+            }
+        }
+
+        /* Extra small screens optimization */
+        @media (max-width: 360px) {
+            #music-player {
+                width: calc(100% - 16px);
+                padding: 8px;
+                gap: 8px;
+            }
+
+            #vinyl-container {
+                width: 40px;
+                height: 40px;
+            }
+
+            #song-title {
+                font-size: 11px;
+            }
+
+            #song-artist {
+                font-size: 8px;
+            }
+
+            .player-btn {
+                width: 34px;
+                height: 34px;
+            }
+
+            .player-btn.play-pause {
+                width: 38px;
+                height: 38px;
+            }
+
+            .btn {
+                font-size: 10px;
+                padding: 10px 6px;
+            }
+
+            #instructions {
+                font-size: 9px;
+            }
+        }
+
+        /* Landscape mode optimization for mobile */
+        @media (max-height: 500px) and (orientation: landscape) {
+            #music-player {
+                height: 60px;
+                padding: 8px 12px;
+                top: 10px;
+            }
+
+            #vinyl-container {
+                width: 44px;
+                height: 44px;
+            }
+
+            #instructions {
+                top: 75px;
+                font-size: 10px;
+            }
+
+            #controls {
+                bottom: 10px;
+                right: 10px;
+                gap: 6px;
+            }
+
+            .btn {
+                padding: 8px 12px;
+                font-size: 11px;
+                min-height: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <div id="instructions">Arraste para rotacionar 360° • Role para dar zoom</div>
+    
+    <!-- Fixed audio source path to be relative -->
+    <audio id="audio-player" preload="metadata">
+        <source src="Dilsinho - Telecine (DVD Terra do Nunca Ao Vivo) [-HWFy9SLyOs].mp3" type="audio/mpeg">
+        Seu navegador não suporta o elemento de áudio.
+    </audio>
+
+    <!-- Redesigned music player to be horizontal and at the top -->
+    <div id="music-player">
+        <div id="vinyl-container">
+            <div id="vinyl"></div>
+        </div>
+        <div id="player-content">
+            <div id="player-top">
+                <div id="song-info">
+                    <div id="song-title">Carregando...</div>
+                    <div id="song-artist">Aguarde...</div>
+                </div>
+                <div id="player-controls">
+                    <button class="player-btn" id="prevBtn" aria-label="Música anterior">⏮</button>
+                    <button class="player-btn play-pause" id="playPauseBtn" aria-label="Play/Pause">▶</button>
+                    <button class="player-btn" id="nextBtn" aria-label="Próxima música">⏭</button>
+                </div>
+            </div>
+            <div id="progress-container">
+                <div id="progress-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="controls">
+        <button class="btn" id="resetBtn">Resetar posição</button>
+        <button class="btn" id="toggleRotationBtn">Parar rotação</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        camera.position.set(0, 8, 42);
+        camera.lookAt(0, 0, 0);
+
+        const nebulaGroup = new THREE.Group();
+        
+        const nebulaGeometry = new THREE.BufferGeometry();
+        const nebulaPositions = [];
+        const nebulaColors = [];
+        const nebulaSizes = [];
+
+        // Create subtle nebula effect with fewer, smaller particles
+        for (let i = 0; i < 1500; i++) {
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.random() * Math.PI * 2;
+            const radius = 80 + Math.random() * 120;
+            
+            const x = radius * Math.sin(theta) * Math.cos(phi);
+            const y = radius * Math.sin(theta) * Math.sin(phi);
+            const z = radius * Math.cos(theta);
+            
+            nebulaPositions.push(x, y, z);
+            
+            // Subtle blue/purple colors
+            const colorChoice = Math.random();
+            if (colorChoice < 0.4) {
+                nebulaColors.push(0.2, 0.2, 0.6); // Blue
+            } else if (colorChoice < 0.7) {
+                nebulaColors.push(0.4, 0.2, 0.6); // Purple
+            } else {
+                nebulaColors.push(0.6, 0.2, 0.5); // Pink
+            }
+            
+            nebulaSizes.push(Math.random() * 1.5 + 0.5);
+        }
+
+        nebulaGeometry.setAttribute('position', new THREE.Float32BufferAttribute(nebulaPositions, 3));
+        nebulaGeometry.setAttribute('color', new THREE.Float32BufferAttribute(nebulaColors, 3));
+        nebulaGeometry.setAttribute('size', new THREE.Float32BufferAttribute(nebulaSizes, 1));
+
+        const nebulaMaterial = new THREE.PointsMaterial({
+            size: 0.8,
+            transparent: true,
+            opacity: 0.15,
+            vertexColors: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            sizeAttenuation: true
+        });
+
+        const nebulaCloud = new THREE.Points(nebulaGeometry, nebulaMaterial);
+        nebulaGroup.add(nebulaCloud);
+        scene.add(nebulaGroup);
+
+        const starGeometry = new THREE.BufferGeometry();
+        const starPositions = [];
+        const starSizes = [];
+        const starColors = [];
+
+        for (let i = 0; i < 5000; i++) {
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.random() * Math.PI * 2;
+            const radius = 90 + Math.random() * 150;
+            
+            const x = radius * Math.sin(theta) * Math.cos(phi);
+            const y = radius * Math.sin(theta) * Math.sin(phi);
+            const z = radius * Math.cos(theta);
+            
+            starPositions.push(x, y, z);
+            starSizes.push(Math.random() * 1.5 + 0.3);
+            
+            // Mostly white stars with occasional color variation
+            const colorChoice = Math.random();
+            if (colorChoice < 0.85) {
+                starColors.push(1, 1, 1); // White
+            } else if (colorChoice < 0.92) {
+                starColors.push(0.9, 0.95, 1); // Slightly blue
+            } else {
+                starColors.push(1, 0.98, 0.9); // Slightly yellow
+            }
+        }
+
+        starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+        starGeometry.setAttribute('size', new THREE.Float32BufferAttribute(starSizes, 1));
+        starGeometry.setAttribute('color', new THREE.Float32BufferAttribute(starColors, 3));
+
+        const starMaterial = new THREE.PointsMaterial({
+            size: 1,
+            transparent: true,
+            opacity: 0.8,
+            vertexColors: true,
+            sizeAttenuation: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
+
+        const ambientLight = new THREE.AmbientLight(0x1a1a2e, 0.3);
+        scene.add(ambientLight);
+
+        const pointLight1 = new THREE.PointLight(0xffaa00, 3, 50);
+        pointLight1.position.set(0, 0, 0);
+        scene.add(pointLight1);
+
+        const pointLight2 = new THREE.PointLight(0xff6600, 2, 40);
+        pointLight2.position.set(5, 0, 0);
+        scene.add(pointLight2);
+
+        const pointLight3 = new THREE.PointLight(0xff3300, 1.5, 35);
+        pointLight3.position.set(-5, 0, 0);
+        scene.add(pointLight3);
+
+        scene.fog = new THREE.FogExp2(0x000000, 0.008);
+
+        const blackHoleGeometry = new THREE.SphereGeometry(2.2, 64, 64);
+        const blackHoleMaterial = new THREE.MeshBasicMaterial({
+            color: 0x000000,
+            transparent: false
+        });
+        const blackHole = new THREE.Mesh(blackHoleGeometry, blackHoleMaterial);
+        scene.add(blackHole);
+
+        const horizonGlowGeometry = new THREE.SphereGeometry(2.3, 64, 64);
+        const horizonGlowMaterial = new THREE.MeshBasicMaterial({
+            color: 0xff9944,
+            transparent: true,
+            opacity: 0.2,
+            side: THREE.BackSide,
+            blending: THREE.AdditiveBlending
+        });
+        const horizonGlow = new THREE.Mesh(horizonGlowGeometry, horizonGlowMaterial);
+        scene.add(horizonGlow);
+
+        const accretionDisk = new THREE.Group();
+        
+        const numLayers = 60;
+        const innerRadius = 2.8;
+        const outerRadius = 12;
+        
+        for (let i = 0; i < numLayers; i++) {
+            const t = i / numLayers;
+            const layerInner = innerRadius + (outerRadius - innerRadius) * t;
+            const layerOuter = innerRadius + (outerRadius - innerRadius) * (t + 1 / numLayers);
+            
+            let color, opacity;
+            if (t < 0.2) {
+                color = new THREE.Color().setHSL(0.15, 1, 0.9 - t * 2);
+                opacity = 0.95;
+            } else if (t < 0.4) {
+                color = new THREE.Color().setHSL(0.12, 1, 0.7 - t * 0.8);
+                opacity = 0.85;
+            } else if (t < 0.6) {
+                color = new THREE.Color().setHSL(0.08, 1, 0.6 - t * 0.5);
+                opacity = 0.7;
+            } else if (t < 0.8) {
+                color = new THREE.Color().setHSL(0.05, 1, 0.5 - t * 0.4);
+                opacity = 0.5;
+            } else {
+                color = new THREE.Color().setHSL(0.02, 0.9, 0.3 - t * 0.2);
+                opacity = 0.3;
+            }
+            
+            const ringGeometry = new THREE.RingGeometry(layerInner, layerOuter, 256);
+            const ringMaterial = new THREE.MeshBasicMaterial({
+                color: color,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: opacity,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+            ring.rotation.x = Math.PI / 2;
+            ring.userData.baseOpacity = opacity;
+            ring.userData.layer = i;
+            ring.userData.rotationSpeed = 0.001 + (1 - t) * 0.002;
+            accretionDisk.add(ring);
+        }
+        
+        scene.add(accretionDisk);
+
+        const glowLayers = [
+            { radius: 9, color: 0xffcc66, opacity: 0.3 },
+            { radius: 11, color: 0xff9944, opacity: 0.2 },
+            { radius: 13, color: 0xff6622, opacity: 0.12 },
+            { radius: 15, color: 0xff4411, opacity: 0.06 }
+        ];
+
+        glowLayers.forEach(layer => {
+            const glowGeometry = new THREE.RingGeometry(2.5, layer.radius, 128);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: layer.color,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: layer.opacity,
+                blending: THREE.AdditiveBlending
+            });
+            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+            glow.rotation.x = Math.PI / 2;
+            glow.userData.baseOpacity = layer.opacity;
+            accretionDisk.add(glow);
+        });
+
+        const messages = [
+            "Te amo", "Feliz aniversário", "Você é meu universo", "Para sempre",
+            "Meu amor", "Você ilumina minha vida", "Minha estrela", "Amor eterno",
+            "Você é especial", "Meu coração", "Sempre juntos", "Minha vida",
+            "Te adoro", "Meu tudo", "Amor infinito", "Minha luz",
+            "Você é incrível", "Meu sonho", "Te amo muito", "Minha alegria",
+            "Você é única", "Meu mundo", "Amor verdadeiro", "Meu paixão",
+            "Te amo demais", "Minha felicidade", "Você é perfeita", "Meu anjo",
+            "Sempre te amarei", "Minha princesa", "Você é tudo", "Meu amor eterno",
+            "Te amo infinito", "Minha rainha", "Você é linda", "Meu tesouro",
+            "Amor da minha vida", "Minha inspiração", "Você é maravilhosa", "Meu sol",
+            "Meu céu", "Você é demais", "Te amo sempre", "Minha joia",
+            "Você é brilhante", "Meu diamante", "Amor sem fim", "Minha estrela guia",
+            "Você é mágica", "Meu encanto", "Te amo eternamente", "Minha deusa",
+            "Você é divina", "Meu paraíso", "Amor puro", "Minha essência",
+            "Você é sublime", "Meu destino", "Te amo profundamente", "Minha alma",
+            "Você é radiante", "Meu brilho", "Amor verdadeiro", "Minha energia"
+        ];
+
+        const textSprites = [];
+
+        messages.forEach((message, index) => {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 1024;
+            canvas.height = 256;
+            
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            
+            context.font = 'bold 80px Poppins';
+            context.fillStyle = '#ffffff';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.shadowColor = '#ffaa44';
+            context.shadowBlur = 30;
+            context.fillText(message, canvas.width / 2, canvas.height / 2);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+            
+            const spriteMaterial = new THREE.SpriteMaterial({
+                map: texture,
+                transparent: true,
+                opacity: 1,
+                depthTest: true,
+                depthWrite: false
+            });
+            
+            const sprite = new THREE.Sprite(spriteMaterial);
+            
+            const phi = Math.acos(-1 + (2 * index) / messages.length);
+            const theta = Math.sqrt(messages.length * Math.PI) * phi;
+            const radius = 20 + Math.random() * 20;
+            
+            sprite.position.x = radius * Math.cos(theta) * Math.sin(phi);
+            sprite.position.y = radius * Math.sin(theta) * Math.sin(phi);
+            sprite.position.z = radius * Math.cos(phi);
+            
+            sprite.scale.set(6, 1.5, 1);
+            
+            sprite.userData = { 
+                originalScale: 6,
+                message: message
+            };
+            textSprites.push(sprite);
+            scene.add(sprite);
+        });
+
+        const audioPlayer = document.getElementById('audio-player');
+        const vinyl = document.getElementById('vinyl');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const progressBar = document.getElementById('progress-bar');
+        const progressContainer = document.getElementById('progress-container');
+        const songTitle = document.getElementById('song-title');
+        const songArtist = document.getElementById('song-artist');
+
+        audioPlayer.volume = 0.8;
+        console.log('[v0] Audio player initialized with volume:', audioPlayer.volume);
+
+        const playlist = [
+            { 
+                title: "Telecine", 
+                artist: "Dilsinho",
+                src: "Dilsinho - Telecine (DVD Terra do Nunca Ao Vivo) [-HWFy9SLyOs].mp3"
+            },
+            { 
+                title: "Pra Você Acreditar", 
+                artist: "Ferrugem",
+                src: "DVD PRAZER, EU SOU FERRUGEM_ _PRA VOC ACREDITAR_ [uLcJIqdFpFM].mp3"
+            }
+        ];
+
+        let currentSongIndex = 0;
+
+        function loadSong(index) {
+            const song = playlist[index];
+            audioPlayer.src = song.src;
+            songTitle.textContent = song.title;
+            songArtist.textContent = song.artist;
+            audioPlayer.load();
+            console.log('[v0] Loading song:', song.title, 'from', song.src);
+        }
+
+        function updateSongInfo() {
+            songTitle.textContent = playlist[currentSongIndex].title;
+            songArtist.textContent = playlist[currentSongIndex].artist;
+        }
+
+        audioPlayer.addEventListener('loadedmetadata', () => {
+            console.log('[v0] Audio loaded successfully, duration:', audioPlayer.duration);
+        });
+
+        audioPlayer.addEventListener('error', (e) => {
+            console.log('[v0] Audio error:', audioPlayer.error);
+        });
+
+        audioPlayer.addEventListener('timeupdate', () => {
+            if (audioPlayer.duration) {
+                const progressPercentage = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+                progressBar.style.width = progressPercentage + '%';
+            }
+        });
+
+        audioPlayer.addEventListener('ended', () => {
+            currentSongIndex = (currentSongIndex + 1) % playlist.length;
+            loadSong(currentSongIndex);
+            audioPlayer.play().catch(e => console.log('[v0] Autoplay prevented:', e));
+        });
+
+        audioPlayer.addEventListener('play', () => {
+            vinyl.classList.add('spinning');
+            playPauseBtn.textContent = '⏸';
+            console.log('[v0] Audio playing');
+        });
+
+        audioPlayer.addEventListener('pause', () => {
+            vinyl.classList.remove('spinning');
+            playPauseBtn.textContent = '▶';
+            console.log('[v0] Audio paused');
+        });
+
+        playPauseBtn.addEventListener('click', () => {
+            console.log('[v0] Play/Pause button clicked, current state:', audioPlayer.paused ? 'paused' : 'playing');
+            console.log('[v0] Audio ready state:', audioPlayer.readyState);
+            console.log('[v0] Audio source:', audioPlayer.src);
+            
+            if (audioPlayer.paused) {
+                // Ensure audio is loaded before playing
+                if (audioPlayer.readyState < 2) {
+                    console.log('[v0] Audio not ready, loading...');
+                    audioPlayer.load();
+                }
+                
+                const playPromise = audioPlayer.play();
+                if (playPromise !== undefined) {
+                    playPromise
+                        .then(() => {
+                            console.log('[v0] Playback started successfully');
+                        })
+                        .catch(e => {
+                            console.log('[v0] Play error:', e);
+                            alert('Erro ao reproduzir áudio. Tente novamente.');
+                        });
+                }
+            } else {
+                audioPlayer.pause();
+            }
+        });
+
+        prevBtn.addEventListener('click', () => {
+            currentSongIndex = (currentSongIndex - 1 + playlist.length) % playlist.length;
+            loadSong(currentSongIndex);
+            audioPlayer.play().catch(e => console.log('[v0] Play error:', e));
+        });
+
+        nextBtn.addEventListener('click', () => {
+            currentSongIndex = (currentSongIndex + 1) % playlist.length;
+            loadSong(currentSongIndex);
+            audioPlayer.play().catch(e => console.log('[v0] Play error:', e));
+        });
+
+        progressContainer.addEventListener('click', (e) => {
+            const rect = progressContainer.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const percentage = clickX / rect.width;
+            if (audioPlayer.duration) {
+                audioPlayer.currentTime = percentage * audioPlayer.duration;
+            }
+        });
+
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let cameraRotation = { x: 0, y: 0 };
+        let autoRotate = true;
+        const initialCameraPosition = { x: 0, y: 8, z: 42 };
+
+        renderer.domElement.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        renderer.domElement.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const deltaX = e.clientX - previousMousePosition.x;
+                const deltaY = e.clientY - previousMousePosition.y;
+                
+                cameraRotation.y += deltaX * 0.005;
+                cameraRotation.x += deltaY * 0.005;
+                
+                cameraRotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraRotation.x));
+                
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+                autoRotate = false;
+            }
+        });
+
+        renderer.domElement.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        renderer.domElement.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                isDragging = true;
+                previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }
+        }, { passive: true });
+
+        renderer.domElement.addEventListener('touchmove', (e) => {
+            if (isDragging && e.touches.length === 1) {
+                const deltaX = e.touches[0].clientX - touchStartX;
+                const deltaY = e.touches[0].clientY - touchStartY;
+                
+                cameraRotation.y += deltaX * 0.005;
+                cameraRotation.x += deltaY * 0.005;
+                
+                cameraRotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraRotation.x));
+                
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                autoRotate = false;
+            }
+        }, { passive: true });
+
+        renderer.domElement.addEventListener('touchend', () => {
+            isDragging = false;
+        }, { passive: true });
+
+        renderer.domElement.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            camera.position.z += e.deltaY * 0.01;
+            camera.position.z = Math.max(10, Math.min(50, camera.position.z));
+        }, { passive: false });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            cameraRotation = { x: 0, y: 0 };
+            camera.position.set(initialCameraPosition.x, initialCameraPosition.y, initialCameraPosition.z);
+            autoRotate = true;
+        });
+
+        document.getElementById('toggleRotationBtn').addEventListener('click', (e) => {
+            autoRotate = !autoRotate;
+            e.target.textContent = autoRotate ? 'Parar rotação' : 'Retomar rotação';
+        });
+
+        let time = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.01;
+
+            if (autoRotate && !isDragging) {
+                cameraRotation.y += 0.002;
+            }
+
+            const radius = camera.position.length();
+            camera.position.x = Math.sin(cameraRotation.y) * Math.cos(cameraRotation.x) * radius;
+            camera.position.y = Math.sin(cameraRotation.x) * radius;
+            camera.position.z = Math.cos(cameraRotation.y) * Math.cos(cameraRotation.x) * radius;
+            camera.lookAt(0, 0, 0);
+
+            nebulaGroup.rotation.y += 0.00005;
+            nebulaGroup.rotation.x += 0.00002;
+
+            const sizes = stars.geometry.attributes.size.array;
+            for (let i = 0; i < sizes.length; i++) {
+                if (Math.random() > 0.999) {
+                    sizes[i] = Math.random() * 1.5 + 0.3;
+                }
+            }
+            stars.geometry.attributes.size.needsUpdate = true;
+
+            textSprites.forEach(sprite => {
+                sprite.lookAt(camera.position);
+                
+                const distance = sprite.position.distanceTo(camera.position);
+                const scaleFactor = Math.max(0.3, Math.min(1.5, 30 / distance));
+                sprite.scale.set(
+                    sprite.userData.originalScale * scaleFactor,
+                    sprite.userData.originalScale * scaleFactor / 4,
+                    1
+                );
+                
+                if (distance < 20) {
+                    sprite.material.opacity = 1;
+                } else if (distance > 45) {
+                    sprite.material.opacity = 0.4;
+                } else {
+                    sprite.material.opacity = 1 - ((distance - 20) / 25) * 0.6;
+                }
+            });
+
+            accretionDisk.children.forEach((child, index) => {
+                if (child.userData.rotationSpeed) {
+                    child.rotation.z += child.userData.rotationSpeed;
+                    
+                    const pulseSpeed = 0.5 + child.userData.layer * 0.02;
+                    const pulseAmount = 0.05;
+                    child.material.opacity = child.userData.baseOpacity + 
+                        Math.sin(time * pulseSpeed + child.userData.layer * 0.3) * pulseAmount;
+                } else if (child.userData.baseOpacity) {
+                    child.material.opacity = child.userData.baseOpacity + 
+                        Math.sin(time * 1.2) * 0.03;
+                }
+            });
+
+            horizonGlow.material.opacity = 0.2 + Math.sin(time * 2) * 0.05;
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        loadSong(currentSongIndex);
+        console.log('[v0] Initial song loaded');
+        
+        animate();
+    </script>
+</body>
+</html>
